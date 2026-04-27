@@ -1,0 +1,12 @@
+[build]
+target = "index.html"
+release = false
+
+[serve]
+port = 8080
+open = false
+
+[[hooks]]
+stage = "build"
+command = "echo"
+command_arguments = ["building tasahertsiö…"]

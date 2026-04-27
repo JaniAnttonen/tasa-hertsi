@@ -1,40 +1,65 @@
 [package]
-name = "tasa_hertsiö"
+name = "tasahertsio"
 version = "0.1.0"
 edition = "2021"
+description = "tasahertsiö — linear frequency-shifter demo (SSB + spectral) running in the browser via WASM"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [profile.release]
-# This makes the compiled code faster and smaller, but it makes compiling slower,
-# so it's only enabled in release mode.
+opt-level = 3
 lto = true
+codegen-units = 1
 
-[features]
-# If you uncomment this line, it will enable `wee_alloc`:
-#default = ["wee_alloc"]
+[profile.dev]
+opt-level = 1   # DSP is too slow at -O0 to run in real time
 
 [dependencies]
-cpal = { version = "0.13.5", features = ["wasm-bindgen"] }
-# The `wasm-bindgen` crate provides the bare minimum functionality needed
-# to interact with JavaScript.
-wasm-bindgen = "0.2.45"
+leptos = { version = "0.6", features = ["csr"] }
+log = "0.4"
+console_log = "1"
+console_error_panic_hook = "0.1"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+rustfft = "6.2"
 
-# `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
-# compared to the default allocator's ~10K. However, it is slower than the default
-# allocator, so it's not enabled by default.
-wee_alloc = { version = "0.4.2", optional = true }
-
-# The `web-sys` crate allows you to interact with the various browser APIs,
-# like the DOM.
 [dependencies.web-sys]
-version = "0.3.22"
-features = ["console"]
-
-# The `console_error_panic_hook` crate provides better debugging of panics by
-# logging them with `console.error`. This is great for development, but requires
-# all the `std::fmt` and `std::panicking` infrastructure, so it's only enabled
-# in debug mode.
-[target."cfg(debug_assertions)".dependencies]
-console_error_panic_hook = "0.1.5"
+version = "0.3"
+features = [
+  "AudioContext",
+  "AudioContextOptions",
+  "AudioContextState",
+  "BaseAudioContext",
+  "AudioBuffer",
+  "AudioBufferSourceNode",
+  "AudioDestinationNode",
+  "AudioNode",
+  "AudioParam",
+  "GainNode",
+  "AnalyserNode",
+  "ScriptProcessorNode",
+  "AudioProcessingEvent",
+  "MediaStream",
+  "MediaStreamTrack",
+  "MediaStreamConstraints",
+  "MediaStreamAudioSourceNode",
+  "MediaDevices",
+  "Navigator",
+  "Window",
+  "Document",
+  "DomRect",
+  "Element",
+  "HtmlElement",
+  "HtmlInputElement",
+  "HtmlCanvasElement",
+  "CanvasRenderingContext2d",
+  "CanvasGradient",
+  "Event",
+  "EventTarget",
+  "File",
+  "FileList",
+  "Blob",
+  "console",
+]
