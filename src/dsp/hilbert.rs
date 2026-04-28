@@ -18,7 +18,7 @@ impl HilbertFir {
         assert!(n_taps % 2 == 1, "Hilbert FIR length must be odd");
         let m = (n_taps - 1) / 2;
         let mut taps = vec![0.0f32; n_taps];
-        for k in 0..n_taps {
+        for (k, tap) in taps.iter_mut().enumerate() {
             let i = k as i32 - m as i32;
             let h = if i == 0 || i % 2 == 0 {
                 0.0
@@ -27,7 +27,7 @@ impl HilbertFir {
             };
             // Hann window to keep the impulse response well-behaved on truncation.
             let w = 0.5 - 0.5 * (2.0 * PI * k as f32 / (n_taps - 1) as f32).cos();
-            taps[k] = h * w;
+            *tap = h * w;
         }
         Self {
             taps,

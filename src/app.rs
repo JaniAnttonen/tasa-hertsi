@@ -4,6 +4,7 @@ use std::rc::Rc;
 
 use leptos::html::Canvas;
 use leptos::*;
+use wasm_bindgen::JsCast;
 use web_sys::HtmlCanvasElement;
 
 use crate::audio::{Audio, SourceKind};
@@ -88,7 +89,20 @@ pub fn App() -> impl IntoView {
             } else {
                 let audio = audio.clone();
                 wasm_bindgen_futures::spawn_local(async move {
-                    let _ = audio.borrow_mut().start_mic().await;
+                    // Two-step so the RefCell isn't held across the .await.
+                    let promise = match audio.borrow_mut().begin_mic_request() {
+                        Ok(p) => p,
+                        Err(_) => return,
+                    };
+                    let stream_js = match wasm_bindgen_futures::JsFuture::from(promise).await {
+                        Ok(v) => v,
+                        Err(_) => return,
+                    };
+                    let stream = match stream_js.dyn_into::<web_sys::MediaStream>() {
+                        Ok(s) => s,
+                        Err(_) => return,
+                    };
+                    let _ = audio.borrow_mut().attach_mic_stream(stream);
                 });
             }
         }
@@ -113,10 +127,8 @@ pub fn App() -> impl IntoView {
     let output_gain = create_memo(move |_| params.with(|p| p.output_gain));
 
     // Setters for each parameter.
-    let set_shift_hz =
-        move |v: f32| set_params.update(|p| p.ssb.shift_hz = v);
-    let set_stereo_spread =
-        move |v: f32| set_params.update(|p| p.ssb.stereo_spread_hz = v);
+    let set_shift_hz = move |v: f32| set_params.update(|p| p.ssb.shift_hz = v);
+    let set_stereo_spread = move |v: f32| set_params.update(|p| p.ssb.stereo_spread_hz = v);
     let set_upper_sb = move |v: f32| set_params.update(|p| p.ssb.upper_level = v);
     let set_lower_sb = move |v: f32| set_params.update(|p| p.ssb.lower_level = v);
     let set_feedback = move |v: f32| set_params.update(|p| p.ssb.feedback = v);
@@ -132,17 +144,17 @@ pub fn App() -> impl IntoView {
     let is_file_playing = create_memo(move |_| source.get() == SourceKind::File);
     let is_mic_active = create_memo(move |_| source.get() == SourceKind::Mic);
 
-    let file_name_view = move || {
-        match loaded_name.get() {
-            Some(n) => view! {
-                <span class="file-name">
-                    {format!("{} · {:.1}s", truncate(&n, 28), 0.0_f32)}
-                </span>
-            }.into_view(),
-            None => view! {
-                <span class="file-name"><span class="empty">"no file loaded"</span></span>
-            }.into_view(),
+    let file_name_view = move || match loaded_name.get() {
+        Some(n) => view! {
+            <span class="file-name">
+                {format!("{} · {:.1}s", truncate(&n, 28), 0.0_f32)}
+            </span>
         }
+        .into_view(),
+        None => view! {
+            <span class="file-name"><span class="empty">"no file loaded"</span></span>
+        }
+        .into_view(),
     };
 
     let peak_pct = move || (peak.get().clamp(0.0, 1.5) / 1.5 * 100.0) as f64;
@@ -285,6 +297,9 @@ pub fn App() -> impl IntoView {
     }
 }
 
+// slider_row is a thin view helper; bundling these into a struct would just
+// add ceremony for one call site each.
+#[allow(clippy::too_many_arguments)]
 fn slider_row(
     label: &'static str,
     value: Signal<f32>,

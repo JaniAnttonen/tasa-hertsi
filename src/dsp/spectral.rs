@@ -1,3 +1,7 @@
+// Several inner loops index into multiple parallel arrays (input ring +
+// window + FFT scratch + output ring); the range-loop form is the most
+// readable shape for that, so suppress the lint for this whole module.
+#![allow(clippy::needless_range_loop)]
 use std::f32::consts::{PI, TAU};
 use std::sync::Arc;
 
