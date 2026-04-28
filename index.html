@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>tasahertsiö — linear frequency shifter</title>
+  <link rel="stylesheet" href="/tasa-hertsi/style-2a791ca7a4cfd3d9.css" integrity="sha384-PEF+aNsrhJ/lj2l88HkzeYEkkfIBf+nM0jC45OSfFGBpERJr07AUYsDIMbF9txfa"/>
+  
+<script type="module">
+import init, * as bindings from '/tasa-hertsi/tasahertsio-fdc009c8cdd1826f.js';
+const wasm = await init({ module_or_path: '/tasa-hertsi/tasahertsio-fdc009c8cdd1826f_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
+<link rel="modulepreload" href="/tasa-hertsi/tasahertsio-fdc009c8cdd1826f.js" crossorigin="anonymous" integrity="sha384-SqW6fK9SH3bYBXkbVRWbEecplxQNFEuWgn1KDypmWjFMFwb0+bE3yKFbOx1nTau8"><link rel="preload" href="/tasa-hertsi/tasahertsio-fdc009c8cdd1826f_bg.wasm" crossorigin="anonymous" integrity="sha384-6gMTPXeCvSWNUxzUBRNRIH7ZfKbBA3DIm0RG54MlU+CpQbzmo4za6ZiLMZauyzBj" as="fetch" type="application/wasm"></head>
+<body>
+  <input id="file-input" type="file" accept="audio/*" />
+  <noscript>this demo needs JavaScript and WebAssembly.</noscript>
+</body>
+</html>
