@@ -328,15 +328,9 @@ fn slider_row(
         }
     };
     let class = if bipolar { "slider bipolar" } else { "slider" };
-    let val_text = move || {
-        let v = value.get();
-        match decimals {
-            0 => format!("{:.0}{}", v, suffix),
-            1 => format!("{:.1}{}", v, suffix),
-            2 => format!("{:.2}{}", v, suffix),
-            _ => format!("{:.3}{}", v, suffix),
-        }
-    };
+    let val_input_text = move || fmt_value(value.get(), decimals);
+    let suffix_trimmed = suffix.trim();
+    let has_suffix = !suffix_trimmed.is_empty();
 
     view! {
         <div class="slider-row">
@@ -354,8 +348,58 @@ fn slider_row(
                     on_input(v);
                 }
             />
-            <div class="val">{val_text}</div>
+            <div class="val">
+                <input
+                    type="number"
+                    class="val-input"
+                    min=min.to_string()
+                    max=max.to_string()
+                    step=step.to_string()
+                    prop:value=val_input_text
+                    on:change=move |ev| {
+                        let target = match ev.target()
+                            .and_then(|t| t.dyn_into::<web_sys::HtmlInputElement>().ok()) {
+                            Some(t) => t,
+                            None => return,
+                        };
+                        let raw = target.value();
+                        match raw.trim().parse::<f32>() {
+                            Ok(v) => {
+                                let clamped = v.clamp(min, max);
+                                on_input(clamped);
+                                // Force the displayed value to reflect the
+                                // clamped/parsed result (signal write may
+                                // be a no-op if unchanged, in which case
+                                // prop:value won't fire on its own).
+                                target.set_value(&fmt_value(clamped, decimals));
+                            }
+                            Err(_) => {
+                                target.set_value(&fmt_value(value.get(), decimals));
+                            }
+                        }
+                    }
+                    on:keydown=move |ev| {
+                        if ev.key() == "Enter" {
+                            if let Some(t) = ev.target()
+                                .and_then(|t| t.dyn_into::<web_sys::HtmlInputElement>().ok())
+                            {
+                                let _ = t.blur();
+                            }
+                        }
+                    }
+                />
+                {has_suffix.then(|| view! { <span class="val-suffix">{suffix_trimmed}</span> })}
+            </div>
         </div>
+    }
+}
+
+fn fmt_value(v: f32, decimals: u8) -> String {
+    match decimals {
+        0 => format!("{:.0}", v),
+        1 => format!("{:.1}", v),
+        2 => format!("{:.2}", v),
+        _ => format!("{:.3}", v),
     }
 }
 

@@ -218,21 +218,52 @@ html, body {
 /* ----- slider rows (flat) ----- */
 .slider-row {
   display: grid;
-  grid-template-columns: 110px 1fr 64px;
+  grid-template-columns: 110px 1fr 84px;
   align-items: center;
   gap: 14px;
   padding: 5px 0;
 }
 .slider-row > .label { font-size: 12px; color: var(--text-dim); text-align: right; }
+
+/* the .val cell is now an inline editable number input + optional suffix */
 .slider-row > .val {
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  height: 22px;
   background: #000;
   border: 1px solid var(--panel-edge);
-  padding: 3px 8px;
+  padding: 1px 6px;
   border-radius: 4px;
+  transition: border-color 0.12s ease;
+}
+.slider-row > .val:focus-within { border-color: var(--panel-edge-bright); }
+
+.val-input {
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  text-align: right;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.val-input::-webkit-outer-spin-button,
+.val-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.val-suffix {
+  font-size: 10px;
+  color: var(--text-mute);
+  flex-shrink: 0;
 }
 
 input[type="range"].slider {
@@ -297,6 +328,6 @@ input[type="range"].slider::-moz-range-thumb {
 
 /* ----- responsive ----- */
 @media (max-width: 720px) {
-  .slider-row { grid-template-columns: 90px 1fr 56px; gap: 10px; }
+  .slider-row { grid-template-columns: 90px 1fr 76px; gap: 10px; }
   .app { padding: 12px; }
 }
