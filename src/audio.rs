@@ -189,7 +189,10 @@ impl Audio {
         Ok(())
     }
 
-    pub async fn start_mic(&mut self) -> Result<(), JsValue> {
+    /// Stop any current source, resume the AudioContext, and kick off a
+    /// `getUserMedia` request. Returns the JS Promise so the caller can
+    /// `.await` it without holding a `RefCell` borrow.
+    pub fn begin_mic_request(&mut self) -> Result<js_sys::Promise, JsValue> {
         self.stop();
         self.resume();
         let nav = web_sys::window().ok_or("no window")?.navigator();
@@ -197,13 +200,13 @@ impl Audio {
         let constraints = MediaStreamConstraints::new();
         constraints.set_audio(&JsValue::TRUE);
         constraints.set_video(&JsValue::FALSE);
-        let promise = media.get_user_media_with_constraints(&constraints)?;
-        let stream_js = JsFuture::from(promise).await?;
-        let stream: MediaStream = stream_js.dyn_into()?;
+        media.get_user_media_with_constraints(&constraints)
+    }
 
+    /// Plug the resolved `MediaStream` into the audio graph.
+    pub fn attach_mic_stream(&mut self, stream: MediaStream) -> Result<(), JsValue> {
         let src = self.ctx.create_media_stream_source(&stream)?;
         src.connect_with_audio_node(&self.script)?;
-
         self.mic_source = Some(src);
         self.mic_stream = Some(stream);
         let mut st = self.status.borrow_mut();
@@ -214,6 +217,10 @@ impl Audio {
 
     pub fn stop(&mut self) {
         if let Some(src) = self.file_source.take() {
+            // web-sys flagged `stop()` deprecated in 0.3.95 in favour of the
+            // typed `stop_with_when(...)`, but the no-arg variant is still
+            // the spec-canonical way to stop "now".
+            #[allow(deprecated)]
             let _ = src.stop();
             let _ = src.disconnect();
         }
