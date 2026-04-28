@@ -99,11 +99,7 @@ impl Engine {
             *s *= g;
             // Final safety clip — keeps a runaway feedback bomb out of the
             // user's speakers without affecting normal level material.
-            if *s > 1.0 {
-                *s = 1.0;
-            } else if *s < -1.0 {
-                *s = -1.0;
-            }
+            *s = s.clamp(-1.0, 1.0);
         }
     }
 }

@@ -1,8 +1,7 @@
 //! Canvas2D drawing for the live output spectrum (monochrome, no glow).
 //!
-//! Bars are drawn with a vertical white→dark-gray gradient: that gives
-//! depth without adding any color or shadowBlur. Cutoff line and shift
-//! arrows are crisp white strokes.
+//! Bars are flat white on flat black. Active band is a low-alpha white
+//! wash. Cutoff line and shift arrows are crisp white strokes.
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -78,10 +77,10 @@ fn request_animation_frame(closure: &Closure<dyn FnMut()>) {
 }
 
 fn set_fill(ctx: &CanvasRenderingContext2d, color: &str) {
-    ctx.set_fill_style(&JsValue::from_str(color));
+    ctx.set_fill_style_str(color);
 }
 fn set_stroke(ctx: &CanvasRenderingContext2d, color: &str) {
-    ctx.set_stroke_style(&JsValue::from_str(color));
+    ctx.set_stroke_style_str(color);
 }
 
 fn draw(
@@ -196,13 +195,13 @@ fn draw(
         } else {
             -6.0
         };
-        let _ = ctx.set_text_align(if dir > 0.0 { "left" } else { "right" });
+        ctx.set_text_align(if dir > 0.0 { "left" } else { "right" });
         let _ = ctx.fill_text(
             &format!("cutoff {} {:.0} Hz", arrow, p.spec.cutoff_hz),
             cx + dir,
             inner_y + 16.0,
         );
-        let _ = ctx.set_text_align("left");
+        ctx.set_text_align("left");
     }
 
     // Shift indicator: arrows at 100 Hz / 1 kHz / 10 kHz, white.
@@ -245,7 +244,7 @@ fn draw(
         // Centered shift label
         let center_x = (f_to_x(active_lo.max(f_min)) + f_to_x(active_hi.min(f_max))) * 0.5;
         ctx.set_font("11px ui-sans-serif, system-ui, sans-serif");
-        let _ = ctx.set_text_align("center");
+        ctx.set_text_align("center");
         set_fill(ctx, "#ffffff");
         let sign = if shift_hz > 0.0 { "+" } else { "" };
         let _ = ctx.fill_text(
@@ -253,6 +252,6 @@ fn draw(
             center_x,
             inner_y + 16.0,
         );
-        let _ = ctx.set_text_align("left");
+        ctx.set_text_align("left");
     }
 }
